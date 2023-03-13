@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_restx import Api
-from .students.students import student_namespace
+from .students.views import student_namespace
 from .models.students import Student
 from .utils import db
 from .config.config import config_dict
@@ -11,14 +11,7 @@ def create_app(config=config_dict['dev']):
  
     app = Flask(__name__)
 
-    app.config['SECRET_KEY'] = 'mysecretkey'
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///students.db'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SQLALCHEMY_ECHO'] = True
-    app.config['SWAGGER_UI_DOC_EXPANSION'] = 'list'
-    app.config['RESTX_VALIDATE'] = True
-    app.config['RESTX_MASK_SWAGGER'] = False
-    app.config['ERROR_404_HELP'] = False
+    app.config.from_object(config)
     
     jwt = JWTManager(app)
     db.init_app(app)
