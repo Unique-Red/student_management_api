@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_restx import Resource, fields, Namespace
 from extensions import db
-from ..models.students import Student
+from ..models.users import Student
 
 student_namespace = Namespace('Students', description='Student related operations')
 
