@@ -17,7 +17,7 @@ admin = admin_namespace.model('Admin', {
 
 @admin_namespace.route('/register')
 class Register(Resource):
-    @admin_namespace.doc('register_admin')
+    @admin_namespace.doc('register_admin', description='Register a new admin')
     @admin_namespace.expect(admin)
     @admin_namespace.marshal_with(admin, code=201)
     def post(self):
@@ -32,7 +32,7 @@ class Register(Resource):
 
         return admin, HTTPStatus.CREATED
     
-    @admin_namespace.doc('get_all_admins')
+    @admin_namespace.doc('get_all_admins', description='Get all admins')
     @admin_namespace.marshal_with(admin, code=200)
     def get(self):
         admins = Admin.query.all()
@@ -40,13 +40,13 @@ class Register(Resource):
     
 @admin_namespace.route('/register/<int:admin_id>')
 class Register(Resource):
-    @admin_namespace.doc('get_admin_by_id')
+    @admin_namespace.doc('get_admin_by_id', description='Get admin by id')
     @admin_namespace.marshal_with(admin, code=200)
     def get(self, admin_id):
         admin = Admin.query.filter_by(id=admin_id).first()
         return admin, HTTPStatus.OK
 
-    @admin_namespace.doc('delete_admin_by_id')
+    @admin_namespace.doc('delete_admin_by_id', description='Delete admin by id')
     @admin_namespace.marshal_with(admin, code=200)
     def delete(self, admin_id):
         admin = Admin.query.filter_by(id=admin_id).first()
@@ -54,7 +54,7 @@ class Register(Resource):
         db.session.commit()
         return admin, HTTPStatus.OK
 
-    @admin_namespace.doc('update_admin_by_id')
+    @admin_namespace.doc('update_admin_by_id', description='Update admin by id')
     @admin_namespace.marshal_with(admin, code=200)
     def put(self, admin_id):
         admin = Admin.query.filter_by(id=admin_id).first()
@@ -67,7 +67,7 @@ class Register(Resource):
     
 @admin_namespace.route('/login')
 class Login(Resource):
-    @admin_namespace.doc('login_admin')
+    @admin_namespace.doc('login_admin', description='Login admin')
     @admin_namespace.expect(admin)
     def post(self):
         admin = Admin.query.filter_by(email=request.json['email']).first()
@@ -78,7 +78,7 @@ class Login(Resource):
         
 @admin_namespace.route('/logout')
 class Logout(Resource):
-    @admin_namespace.doc('logout_admin')
+    @admin_namespace.doc('logout_admin', description='Logout admin')
     @admin_namespace.expect(admin)
     def post(self):
         return "Logged out", HTTPStatus.OK
