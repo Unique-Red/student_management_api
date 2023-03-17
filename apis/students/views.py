@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_restx import Resource, fields, Namespace
 from extensions import db
-from ..models.users import Student
+from ..models import Student
 
 student_namespace = Namespace('Students', description='Student related operations')
 
@@ -43,6 +43,7 @@ class Student(Resource):
         student = student_namespace.payload
         student['id'] = id
         STUDENTS.append(student)
+        db.session.commit()
         return student, 201
 
     @student_namespace.doc('update_student')
