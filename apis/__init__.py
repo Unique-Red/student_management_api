@@ -3,7 +3,7 @@ from flask_restx import Api
 from .students.views import student_namespace
 from .auth.views import auth_namespace
 from .courses.views import courses_namespace
-from .models import User, Student, Courses
+from .models import User, Student, Courses, CourseRegistered, Admin
 from extensions import db
 from .config.config import config_dict
 from flask_jwt_extended import JWTManager
@@ -20,7 +20,7 @@ def create_app(config=config_dict['dev']):
     migrate = Migrate()
 
     db.init_app(app)
-    migrate.init_app(app, db)
+    migrate.init_app(app, db, render_as_batch=True)
 
     api = Api(app,
         title='Student Management API',
@@ -43,6 +43,6 @@ def create_app(config=config_dict['dev']):
 
     @app.shell_context_processor
     def make_shell_context():
-        return {'db': db, 'Student': Student, 'User': User, 'Courses': Courses}
+        return {'db': db, 'Student': Student, 'User': User, 'Courses': Courses, 'CourseRegistered': CourseRegistered, 'Admin': Admin}
 
     return app

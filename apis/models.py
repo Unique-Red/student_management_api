@@ -35,7 +35,7 @@ class Student(db.Model):
     
 
     def __repr__(self):
-        return f"{self.name} has email {self.email}"
+        return f"{self.first_name} has email {self.email}"
 
     def save(self):
         db.session.add(self)
@@ -60,11 +60,17 @@ class Courses(db.Model):
     courses_registered = db.relationship('CourseRegistered', backref='courses', lazy=True)
     registered_students = db.relationship('Student', secondary='courses_registered', backref=db.backref('registered_courses', lazy='dynamic'))
 
+    def __repr__(self):
+        return f"{self.course_code} is taken by {self.lecturer}"
+
 class CourseRegistered(db.Model):
     __tablename__ = 'courses_registered'
     id = db.Column(db.Integer, primary_key=True)
     student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
     course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=False)
+
+    def __repr__(self):
+        return f"{self.student_id} has course {self.course_id}"
 
 
 class Admin(db.Model):
@@ -76,4 +82,7 @@ class Admin(db.Model):
     password = db.Column(db.String(120), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     user = db.relationship('User', backref=db.backref('admin', lazy=True))
+
+    def __repr__(self):
+        return f"{self.first_name} has email {self.email}"
 
