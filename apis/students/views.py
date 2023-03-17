@@ -1,4 +1,3 @@
-from flask import Flask
 from flask_restx import Resource, fields, Namespace
 from extensions import db
 from ..models import Student
@@ -8,19 +7,20 @@ student_namespace = Namespace('Students', description='Student related operation
 
 student = student_namespace.model('Student', {
     'id': fields.Integer(required=True, description='The student identifier'),
-    'name': fields.String(required=True, description='The student name'),
+    'first_name': fields.String(required=True, description="The student's first name"),
+    'last_name': fields.String(required=True, description="The student's last name"),
     'email': fields.String(required=True, description='The student email'),
-    'grade': fields.Float(required=True, description='The student grade')
+    "matric_number": fields.String(required=True, description='The student matric number'),
+    'gpa': fields.Float(required=True, description='The student grade')
 })
 
-# STUDENTS = Student.get_all()
-STUDENTS = []
 
 @student_namespace.route('/')
 class StudentList(Resource):
     @student_namespace.doc("list_students")
     @student_namespace.marshal_list_with(student)
     def get(self):
+        STUDENTS = Student.query.all()
         return STUDENTS
     
 
@@ -31,6 +31,7 @@ class Student(Resource):
     @student_namespace.doc('get_student')
     @student_namespace.marshal_with(student)
     def get(self, id):
+        STUDENTS = Student.query.all()
         for student in STUDENTS:
             if student['id'] == id:
                 return student
@@ -42,6 +43,7 @@ class Student(Resource):
     def post(self, id):
         student = student_namespace.payload
         student['id'] = id
+        STUDENTS = Student.query.all()
         STUDENTS.append(student)
         db.session.commit()
         return student, 201
@@ -50,6 +52,7 @@ class Student(Resource):
     @student_namespace.expect(student)
     @student_namespace.marshal_with(student)
     def put(self, id):
+        STUDENTS = Student.query.all()
         for student in STUDENTS:
             if student['id'] == id:
                 student.update(student_namespace.payload)
@@ -59,6 +62,7 @@ class Student(Resource):
     @student_namespace.doc('delete_student')
     @student_namespace.marshal_with(student)
     def delete(self, id):
+        STUDENTS = Student.query.all()
         for i, student in enumerate(STUDENTS):
             if student['id'] == id:
                 del STUDENTS[i]
