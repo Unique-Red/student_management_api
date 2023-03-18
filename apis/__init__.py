@@ -4,7 +4,7 @@ from .students.views import student_namespace
 from .auth.views import auth_namespace
 from .courses.views import courses_namespace
 from .admin.views import admin_namespace
-from .models import User, Student, Courses, CourseRegistered, Admin
+from .models import Student, Courses, CourseRegistered, Admin
 from extensions import db
 from .config.config import config_dict
 from flask_jwt_extended import JWTManager
@@ -45,6 +45,6 @@ def create_app(config=config_dict['dev']):
 
     @app.shell_context_processor
     def make_shell_context():
-        return {'db': db, 'Student': Student, 'User': User, 'Courses': Courses, 'CourseRegistered': CourseRegistered, 'Admin': Admin}
+        return {'db': db, 'Student': Student, 'Courses': Courses, 'CourseRegistered': CourseRegistered, 'Admin': Admin}
 
     return app
