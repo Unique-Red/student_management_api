@@ -1,6 +1,6 @@
 from flask_restx import Resource, fields, Namespace
 from extensions import db
-from ..models import Student
+from ..models import Student, Courses, CourseRegistered
 
 student_namespace = Namespace('Students', description='Student related operations')
 
@@ -14,6 +14,11 @@ student = student_namespace.model('Student', {
     'gpa': fields.Float(required=True, description='The student grade')
 })
 
+gpa = student_namespace.model('GPA', {
+    "student_id": fields.Integer(required=True, description='The student identifier'),
+    "course_code": fields.String(required=True, description='The course code'),
+    'gpa': fields.Float(required=True, description='The student grade')
+})
 
 @student_namespace.route('/')
 class StudentList(Resource):
@@ -68,3 +73,39 @@ class Student(Resource):
                 del STUDENTS[i]
                 return '', 204
         student_namespace.abort(404, f"Student {id} doesn't exist")
+
+@student_namespace.route('/<int:id>/courses')
+@student_namespace.param('id', 'The student identifier')
+@student_namespace.response(404, 'Student not found')
+class StudentCourses(Resource):
+    @student_namespace.doc('get_student_courses')
+    @student_namespace.marshal_with(student)
+    def get(self, id):
+        STUDENTS = Student.query.all()
+        for student in STUDENTS:
+            if student['id'] == id:
+                return student
+        student_namespace.abort(404, f"Student {id} doesn't exist")
+
+@student_namespace.route('/<int:id>/gpa')
+@student_namespace.param('id', 'The student identifier')
+@student_namespace.response(404, 'Student not found')
+class StudentGPA(Resource):
+    @student_namespace.doc('get_student_gpa')
+    @student_namespace.marshal_with(gpa)
+    def get(self, id):
+        gpa = [g for g in Student.gpa if g['student_id'] == id]
+        if not gpa:
+            student_namespace.abort(404, f"Student {id} doesn't exist")
+        return gpa
+    
+    @student_namespace.doc('create_student_gpa')
+    @student_namespace.expect(gpa)
+    @student_namespace.marshal_with(gpa, code=201)
+    def post(self, id):
+        gpa = student_namespace.payload
+        gpa['student_id'] = id
+        Student.gpa.append(gpa)
+        db.session.commit()
+        return gpa, 201
+
