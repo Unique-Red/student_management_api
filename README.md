@@ -65,5 +65,5 @@ quit()
 python app.py
 ```
 
-Live link on
-![Render](https://img.shields.io/badge/Render-%46E3B7.svg?style=for-the-badge&logo=render&logoColor=white) : https://stma.onrender.com/
+![Render](https://img.shields.io/badge/Render-%46E3B7.svg?style=for-the-badge&logo=render&logoColor=white) : 
+Live link: <a href="https://stma.onrender.com/">STMA</a>
