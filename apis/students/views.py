@@ -108,4 +108,3 @@ class StudentGPA(Resource):
         Student.gpa.append(gpa)
         db.session.commit()
         return gpa, 201
-

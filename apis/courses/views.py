@@ -4,6 +4,7 @@ from ..models import Student, Courses, CourseRegistered
 from http import HTTPStatus
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask import request
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 courses_namespace = Namespace('Courses', description='Courses related operations')
 
@@ -54,6 +55,7 @@ class Register(Resource):
     
     @courses_namespace.doc('delete_course_by_id')
     @courses_namespace.marshal_with(course, code=200)
+    @jwt_required
     def delete(self, course_id):
         course = Courses.query.filter_by(id=course_id).first()
         db.session.delete(course)
@@ -64,6 +66,7 @@ class Register(Resource):
     @courses_namespace.doc('update_course_by_id')
     @courses_namespace.expect(course)
     @courses_namespace.marshal_with(course, code=200)
+    @jwt_required
     def put(self, course_id):
         course = Courses.query.filter_by(id=course_id).first()
         data = request.get_json()
@@ -100,6 +103,7 @@ class Register(Resource):
     
     @courses_namespace.doc('delete_course_registered_by_id')
     @courses_namespace.marshal_with(courses_registered, code=200)
+    @jwt_required
     def delete(self, course_id):
         courses_registered = CourseRegistered.query.filter_by(course_id=course_id).all()
         for course_registered in courses_registered:
