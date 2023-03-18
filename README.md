@@ -9,7 +9,7 @@ Student Management API as the name implies, it is used manage students data (the
 - Retrieving all the students, courses and the ones that registered a particular course.
 - GPA calculation.
 - JWT Authentication and authorization.
-
+<hr>
 ## Built with:
 ![Flask](https://img.shields.io/badge/flask-%23000.svg?style=for-the-badge&logo=flask&logoColor=white)
 
@@ -17,7 +17,7 @@ Student Management API as the name implies, it is used manage students data (the
 
 ![SQLite](https://img.shields.io/badge/sqlite-%2307405e.svg?style=for-the-badge&logo=sqlite&logoColor=white)
 
-
+<hr>
 ## Get a copy
 It is believed that you have python installed already. Open CMD or terminal
 1. Clone this repo
@@ -64,7 +64,7 @@ quit()
 ```sh
 python app.py
 ```
-
+<hr>
 ![Render](https://img.shields.io/badge/Render-%46E3B7.svg?style=for-the-badge&logo=render&logoColor=white)
 <br/>
 Live link: <a href="https://stma.onrender.com/">STMA</a>
