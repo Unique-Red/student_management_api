@@ -10,7 +10,7 @@ class Student(db.Model):
     first_name = db.Column(db.String(80), nullable=False)
     last_name = db.Column(db.String(80), nullable=False)
     email = db.Column(db.String(120), nullable=False)
-    password_hash = db.Column(db.String(120), nullable=False)
+    password = db.Column(db.String(120), nullable=False)
     courses = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=True)
     
 
@@ -22,10 +22,7 @@ class Courses(db.Model):
     course_unit = db.Column(db.Integer, nullable=False)
     gpa = db.Column(db.Float, nullable=True)
     lecturer = db.Column(db.String(120), nullable=False)
-
-    def __repr__(self):
-        return f"{self.course_code} is taken by {self.lecturer}"
-    
+ 
 
 class CourseRegistered(db.Model):
     __tablename__ = 'coursesregistered'
@@ -45,13 +42,3 @@ class Admin(db.Model):
     email = db.Column(db.String(120), nullable=False)
     is_admin = db.Column(db.Boolean, nullable=False, default=False)
 
-
-    def __init__(self, first_name, last_name, email, password, is_admin=False):
-        self.first_name = first_name
-        self.last_name = last_name
-        self.email = email
-        self.password = generate_password_hash(password)
-        self.is_admin = is_admin
-
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
