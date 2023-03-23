@@ -23,7 +23,7 @@ admin_register = admin_namespace.model('Admin', {
     "password": fields.String(required=True, description='The admin password')
 })
 
-@admin_namespace.route('/')
+@admin_namespace.route('/register')
 class AdminRegister(Resource):
     @admin_namespace.doc('register_admin', description='Register an admin')
     @admin_namespace.expect(admin_register)
@@ -44,6 +44,8 @@ class AdminRegister(Resource):
         admins = Admin.query.all()
         return admins, HTTPStatus.OK
     
+@admin_namespace.route('/<int:id>')
+class AdminRegister(Resource):
     @admin_namespace.doc('get_admin_by_id', description='Get an admin by id')
     @admin_namespace.marshal_with(admin)
     def get(self, id):
@@ -66,7 +68,7 @@ class AdminRegister(Resource):
         admin = Admin.query.get(id)
         db.session.delete(admin)
         db.session.commit()
-        return {'message': 'Admin deleted successfully'}, HTTPStatus.OK
+        return {'message': 'Admin deleted successfully'}, HTTPStatus.OK 
     
 @admin_namespace.route('/login')
 class AdminLogin(Resource):
@@ -78,3 +80,9 @@ class AdminLogin(Resource):
             return {'message': 'Login successful'}, HTTPStatus.OK
         return {'message': 'Invalid credentials'}, HTTPStatus.UNAUTHORIZED
     
+@admin_namespace.route('/logout')
+class AdminLogout(Resource):
+    @admin_namespace.doc('logout_admin', description='Logout an admin')
+    @jwt_required
+    def post(self):
+        return {'message': 'Logout successful'}, HTTPStatus.OK

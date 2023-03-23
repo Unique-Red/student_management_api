@@ -26,6 +26,7 @@ class Register(Resource):
     @courses_namespace.doc('register_course')
     @courses_namespace.expect(course)
     @courses_namespace.marshal_with(course, code=201)
+    @jwt_required
     def post(self):
         data = request.get_json()
         new_course = Courses(

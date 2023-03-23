@@ -1,6 +1,9 @@
 from flask_restx import Resource, fields, Namespace
 from extensions import db
 from ..models import Student, Courses, CourseRegistered
+from http import HTTPStatus
+from flask import request
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 student_namespace = Namespace('Students', description='Student related operations')
 
@@ -20,91 +23,51 @@ gpa = student_namespace.model('GPA', {
     'gpa': fields.Float(required=True, description='The student grade')
 })
 
-@student_namespace.route('/')
-class StudentList(Resource):
-    @student_namespace.doc("list_students")
-    @student_namespace.marshal_list_with(student)
-    def get(self):
-        STUDENTS = Student.query.all()
-        return STUDENTS
-    
 
-@student_namespace.route('/<int:id>')
-@student_namespace.param('id', 'The student identifier')
-@student_namespace.response(404, 'Student not found')
-class Student(Resource):
-    @student_namespace.doc('get_student')
-    @student_namespace.marshal_with(student)
-    def get(self, id):
-        STUDENTS = Student.query.all()
-        for student in STUDENTS:
-            if student['id'] == id:
-                return student
-        student_namespace.abort(404, f"Student {id} doesn't exist")
-
-    @student_namespace.doc('create_student')
+@student_namespace.route('/register')
+class Register(Resource):
+    @student_namespace.doc('register_student')
     @student_namespace.expect(student)
     @student_namespace.marshal_with(student, code=201)
-    def post(self, id):
-        student = student_namespace.payload
-        student['id'] = id
-        STUDENTS = Student.query.all()
-        STUDENTS.append(student)
+    @jwt_required
+    def post(self):
+        student = Student.query.filter_by(email=request.json['email']).first()
+        if student:
+            return {'message': 'Student already exists'}, HTTPStatus.BAD_REQUEST 
+
+        data = student_namespace.payload()
+        new_student = Student(
+            first_name=data['first_name'],
+            last_name=data['last_name'],
+            email=data['email'],
+            matric_number=data['matric_number'],
+            gpa=data['gpa']
+        )
+        db.session.add(new_student)
         db.session.commit()
-        return student, 201
 
-    @student_namespace.doc('update_student')
-    @student_namespace.expect(student)
-    @student_namespace.marshal_with(student)
-    def put(self, id):
-        STUDENTS = Student.query.all()
-        for student in STUDENTS:
-            if student['id'] == id:
-                student.update(student_namespace.payload)
-                return student
-        student_namespace.abort(404, f"Student {id} doesn't exist")
+        return new_student, HTTPStatus.CREATED
 
-    @student_namespace.doc('delete_student')
-    @student_namespace.marshal_with(student)
-    def delete(self, id):
-        STUDENTS = Student.query.all()
-        for i, student in enumerate(STUDENTS):
-            if student['id'] == id:
-                del STUDENTS[i]
-                return '', 204
-        student_namespace.abort(404, f"Student {id} doesn't exist")
-
-@student_namespace.route('/<int:id>/courses')
-@student_namespace.param('id', 'The student identifier')
-@student_namespace.response(404, 'Student not found')
-class StudentCourses(Resource):
-    @student_namespace.doc('get_student_courses')
-    @student_namespace.marshal_with(student)
-    def get(self, id):
-        STUDENTS = Student.query.all()
-        for student in STUDENTS:
-            if student['id'] == id:
-                return student
-        student_namespace.abort(404, f"Student {id} doesn't exist")
-
-@student_namespace.route('/<int:id>/gpa')
-@student_namespace.param('id', 'The student identifier')
-@student_namespace.response(404, 'Student not found')
-class StudentGPA(Resource):
-    @student_namespace.doc('get_student_gpa')
-    @student_namespace.marshal_with(gpa)
-    def get(self, id):
-        gpa = [g for g in Student.gpa if g['student_id'] == id]
-        if not gpa:
-            student_namespace.abort(404, f"Student {id} doesn't exist")
-        return gpa
+    @student_namespace.doc('get_all_students')
+    @student_namespace.marshal_with(student, code=200)
+    def get(self):
+        students = Student.query.all()
+        return students, HTTPStatus.OK
     
-    @student_namespace.doc('create_student_gpa')
-    @student_namespace.expect(gpa)
-    @student_namespace.marshal_with(gpa, code=201)
-    def post(self, id):
-        gpa = student_namespace.payload
-        gpa['student_id'] = id
-        Student.gpa.append(gpa)
+@student_namespace.route('/<int:student_id>')
+class Retrieve(Resource):
+    @student_namespace.doc('get_student_by_id')
+    @student_namespace.marshal_with(student, code=200)
+    def get(self, student_id):
+        student = Student.query.filter_by(id=student_id).first()
+        return student, HTTPStatus.OK
+    
+    @student_namespace.doc('delete_student_by_id')
+    @student_namespace.marshal_with(student, code=200)
+    def delete(self, student_id):
+        student = Student.query.filter_by(id=student_id).first()
+        db.session.delete(student)
         db.session.commit()
-        return gpa, 201
+        return student, HTTPStatus.OK
+    
+    
