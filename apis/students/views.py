@@ -170,3 +170,12 @@ class GPA(Resource):
         student.gpa = data['gpa']
         db.session.commit()
         return student, HTTPStatus.OK
+    
+    @student_namespace.doc('delete_student_gpa')
+    @student_namespace.marshal_with(student, code=200)
+    def delete(self, matric_number):
+        student = Student.query.filter_by(matric_number=matric_number).first()
+        student.gpa = None
+        db.session.commit()
+        return student, HTTPStatus.OK
+    
