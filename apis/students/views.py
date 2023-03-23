@@ -31,43 +31,142 @@ class Register(Resource):
     @student_namespace.marshal_with(student, code=201)
     @jwt_required
     def post(self):
+        admin = get_jwt_identity()
         student = Student.query.filter_by(email=request.json['email']).first()
         if student:
             return {'message': 'Student already exists'}, HTTPStatus.BAD_REQUEST 
-
-        data = student_namespace.payload()
-        new_student = Student(
-            first_name=data['first_name'],
-            last_name=data['last_name'],
-            email=data['email'],
-            matric_number=data['matric_number'],
-            gpa=data['gpa']
-        )
-        db.session.add(new_student)
-        db.session.commit()
-
-        return new_student, HTTPStatus.CREATED
-
+        elif admin['is_admin'] == True:
+            new_student = Student(
+                first_name=request.json['first_name'],
+                last_name=request.json['last_name'],
+                email=request.json['email'],
+                matric_number=request.json['matric_number'],
+                gpa=request.json['gpa']
+            )
+            db.session.add(new_student)
+            db.session.commit()
+            return new_student, HTTPStatus.CREATED
+        else:
+            return {'message': 'You are not authorized to perform this action'}, HTTPStatus.UNAUTHORIZED
+        
+@student_namespace.route('/register_course')
+class RegisterCourse(Resource):
+    @student_namespace.doc('register_course')
+    @student_namespace.expect(gpa)
+    @student_namespace.marshal_with(gpa, code=201)
+    @jwt_required
+    def post(self):
+        admin = get_jwt_identity()
+        course = Courses.query.filter_by(course_code=request.json['course_code']).first()
+        student = Student.query.filter_by(matric_number=request.json['matric_number']).first()
+        if course and student:
+            if admin['is_admin'] == True:
+                new_course = CourseRegistered(
+                    student_id=student.id,
+                    course_code=request.json['course_code'],
+                    gpa=request.json['gpa']
+                )
+                db.session.add(new_course)
+                db.session.commit()
+                return new_course, HTTPStatus.CREATED
+            else:
+                return {'message': 'You are not authorized to perform this action'}, HTTPStatus.UNAUTHORIZED
+        else:
+            return {'message': 'Course or Student does not exist'}, HTTPStatus.BAD_REQUEST
+    
+    @student_namespace.doc('update_course')
+    @student_namespace.expect(gpa)
+    @student_namespace.marshal_with(gpa, code=200)
+    @jwt_required
+    def put(self):
+        admin = get_jwt_identity()
+        course = CourseRegistered.query.filter_by(course_code=request.json['course_code']).first()
+        if course:
+            if admin['is_admin'] == True:
+                course.gpa = request.json['gpa']
+                db.session.commit()
+                return course, HTTPStatus.OK
+            else:
+                return {'message': 'You are not authorized to perform this action'}, HTTPStatus.UNAUTHORIZED
+        else:
+            return {'message': 'Course does not exist'}, HTTPStatus.BAD_REQUEST
+        
+    @student_namespace.doc('delete_course')
+    @student_namespace.expect(gpa)
+    @student_namespace.marshal_with(gpa, code=200)
+    @jwt_required
+    def delete(self):
+        admin = get_jwt_identity()
+        course = CourseRegistered.query.filter_by(course_code=request.json['course_code']).first()
+        if course:
+            if admin['is_admin'] == True:
+                db.session.delete(course)
+                db.session.commit()
+                return course, HTTPStatus.OK
+            else:
+                return {'message': 'You are not authorized to perform this action'}, HTTPStatus.UNAUTHORIZED
+        else:
+            return {'message': 'Course does not exist'}, HTTPStatus.BAD_REQUEST
+        
+@student_namespace.route('/all')
+class AllStudents(Resource):
     @student_namespace.doc('get_all_students')
     @student_namespace.marshal_with(student, code=200)
+    @jwt_required
     def get(self):
-        students = Student.query.all()
-        return students, HTTPStatus.OK
+        admin = get_jwt_identity()
+        if admin['is_admin'] == True:
+            students = Student.query.all()
+            return students, HTTPStatus.OK
+        else:
+            return {'message': 'You are not authorized to perform this action'}, HTTPStatus.UNAUTHORIZED
     
-@student_namespace.route('/<int:student_id>')
-class Retrieve(Resource):
-    @student_namespace.doc('get_student_by_id')
+    @student_namespace.doc('delete_all_students')
     @student_namespace.marshal_with(student, code=200)
-    def get(self, student_id):
-        student = Student.query.filter_by(id=student_id).first()
+    @jwt_required
+    def delete(self):
+        admin = get_jwt_identity()
+        if admin['is_admin'] == True:
+            students = Student.query.all()
+            for student in students:
+                db.session.delete(student)
+                db.session.commit()
+            return students, HTTPStatus.OK
+        else:
+            return {'message': 'You are not authorized to perform this action'}, HTTPStatus.UNAUTHORIZED
+
+
+@student_namespace.route('/<string:matric_number>')
+class StudentDetails(Resource):
+    @student_namespace.doc('get_student_details')
+    @student_namespace.marshal_with(student, code=200)
+    def get(self, matric_number):
+        student = Student.query.filter_by(matric_number=matric_number).first()
         return student, HTTPStatus.OK
-    
-    @student_namespace.doc('delete_student_by_id')
+
+    @student_namespace.doc('delete_student')
     @student_namespace.marshal_with(student, code=200)
-    def delete(self, student_id):
-        student = Student.query.filter_by(id=student_id).first()
+    def delete(self, matric_number):
+        student = Student.query.filter_by(matric_number=matric_number).first()
         db.session.delete(student)
         db.session.commit()
         return student, HTTPStatus.OK
     
     
+@student_namespace.route('/gpa/<string:matric_number>')
+class GPA(Resource):
+    @student_namespace.doc('get_student_gpa')
+    @student_namespace.marshal_with(student, code=200)
+    def get(self, matric_number):
+        student = Student.query.filter_by(matric_number=matric_number).first()
+        return student, HTTPStatus.OK
+    
+    @student_namespace.doc('update_student_gpa')
+    @student_namespace.expect(gpa)
+    @student_namespace.marshal_with(student, code=200)
+    def put(self, matric_number):
+        student = Student.query.filter_by(matric_number=matric_number).first()
+        data = student_namespace.payload()
+        student.gpa = data['gpa']
+        db.session.commit()
+        return student, HTTPStatus.OK
