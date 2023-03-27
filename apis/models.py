@@ -6,12 +6,12 @@ class Student(db.Model):
     __tablename__ = 'student'
     id = db.Column(db.Integer, primary_key=True)
     matric_number = db.Column(db.String(120), nullable=False)
-    gpa = db.Column(db.Integer, nullable=True)
     first_name = db.Column(db.String(80), nullable=False)
     last_name = db.Column(db.String(80), nullable=False)
     email = db.Column(db.String(120), nullable=False)
     password = db.Column(db.String(120), nullable=False)
-    courses = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=True)
+    courses = db.relationship('CourseRegistered', backref='student', lazy=True)
+    grade  = db.relationship('Grade', backref='student', lazy=True)
     
 
 class Courses(db.Model):
@@ -20,8 +20,15 @@ class Courses(db.Model):
     course_code = db.Column(db.String(80), nullable=False)
     course_title = db.Column(db.String(120), nullable=False)
     course_unit = db.Column(db.Integer, nullable=False)
-    gpa = db.Column(db.Float, nullable=True)
     lecturer = db.Column(db.String(120), nullable=False)
+
+class Grade(db.Model):
+    __tablename__ = 'grade'
+    id = db.Column(db.Integer, primary_key=True)
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=False)
+    student_id = db.Column(db.Integer, db.ForeignKey('student.id'), nullable=False)
+    percentage = db.Column(db.Float, nullable=False)
+    date_registered = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
  
 
 class CourseRegistered(db.Model):
@@ -29,7 +36,6 @@ class CourseRegistered(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     student_id = db.Column(db.Integer, db.ForeignKey('student.id'), nullable=False)
     course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), nullable=False)
-    gpa = db.Column(db.Float, nullable=True)
     date_registered = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
 
