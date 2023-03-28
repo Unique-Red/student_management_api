@@ -1,9 +1,9 @@
-from flask_restx import Resource, fields, Namespace
+from flask_restx import Resource, fields, Namespace, abort
 from extensions import db
 from ..models import Student, Courses, CourseRegistered, Grade
 from http import HTTPStatus
 from flask import request
-from flask_jwt_extended import jwt_required, get_jwt_identity, verify_jwt_in_request
+from flask_jwt_extended import jwt_required, get_jwt_identity, verify_jwt_in_request, create_access_token,create_refresh_token
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -14,6 +14,11 @@ student_register = student_namespace.model('StudentRegister', {
     'last_name': fields.String(required=True, description="The student's last name"),
     'email': fields.String(required=True, description='The student email'),
     "matric_number": fields.String(required=True, description='The student matric number'),
+    'password': fields.String(required=True, description='The student password')
+})
+
+student_login = student_namespace.model('StudentLogin', {
+    'email': fields.String(required=True, description='The student email'),
     'password': fields.String(required=True, description='The student password')
 })
 
@@ -28,8 +33,16 @@ student = student_namespace.model('Student', {
 
 grade = student_namespace.model('Grade', {
     'id': fields.Integer(required=True, description='The grade identifier'),
-    'grade': fields.Float(required=True, description='The student grade'),
+    'percentage': fields.Float(required=True, description='The student grade'),
     'course_id': fields.Integer(required=True, description='The course identifier'),
+    'student_id': fields.Integer(required=True, description='The student identifier')
+})
+
+course = student_namespace.model('Course', {
+    'id': fields.Integer(required=True, description='The course identifier'),
+    'course_name': fields.String(required=True, description='The course name'),
+    'course_code': fields.String(required=True, description='The course code'),
+    'course_unit': fields.Integer(required=True, description='The course unit'),
     'student_id': fields.Integer(required=True, description='The student identifier')
 })
 
@@ -82,12 +95,17 @@ class Register(Resource):
 @student_namespace.route('/login')
 class Login(Resource):
     @student_namespace.doc('login_student')
-    @student_namespace.expect(student_register)
+    @student_namespace.expect(student_login)
     def post(self):
         data = student_namespace.payload
         student = Student.query.filter_by(email=data['email']).first()
         if student and check_password_hash(student.password, data['password']):
-            return student, HTTPStatus.OK
+            access = create_access_token(identity=student.id)
+            refresh = create_refresh_token(identity=student.id)
+            return {
+                'access_token': access,
+                'refresh_token': refresh
+            }, HTTPStatus.OK
         else:
             return {'message': 'Invalid credentials'}, HTTPStatus.UNAUTHORIZED
         
@@ -135,6 +153,21 @@ class StudentCoursesResource(Resource):
         courses = student.courses
         return courses, HTTPStatus.OK
     
+    @student_namespace.doc('add_student_course')
+    @student_namespace.expect(course)
+    @student_namespace.marshal_with(course, code=201)
+    def post(self, id):
+        data = student_namespace.payload
+        student = Student.query.get(id)
+        if not student:
+            abort(404, message="Student {} doesn't exist".format(id))
+        courses = Courses.query.get(data['id'])
+        if not courses:
+            abort(404, message="Course {} doesn't exist".format(data['course_title']))
+        student.courses.append(courses)
+        db.session.commit()
+        return courses, HTTPStatus.CREATED
+    
 @student_namespace.route('/<int:id>/grades')
 @student_namespace.param('id', 'The student identifier')
 @student_namespace.response(404, 'Student not found')
@@ -142,7 +175,7 @@ class StudentGradesResource(Resource):
     @student_namespace.doc('get_student_grades')
     def get(self, id):
         student = Student.query.get_or_404(id)
-        grades = student.grades
+        grades = student.grade
         return grades, HTTPStatus.OK
     
     @student_namespace.doc('add_student_grade')
@@ -150,10 +183,14 @@ class StudentGradesResource(Resource):
     @student_namespace.marshal_with(grade, code=201)
     def post(self, id):
         data = student_namespace.payload
-        student = Student.query.get_or_404(id)
-        courses = Courses.query.get_or_404(data['courses_id'])
+        student = Student.query.get(id)
+        if not student:
+            abort(404, message="Student {} doesn't exist".format(id))
+        courses = Courses.query.get(data['course_id'])
+        if not courses:
+            abort(404, message="Course {} doesn't exist".format(data['course_id']))
         new_grade = Grade(
-            grade=data['grade'],
+            percentage=data['grade'],
             course_id=courses.id,
             student_id=student.id
         )
@@ -171,7 +208,7 @@ class StudentCourseResource(Resource):
     @student_namespace.doc('get_student_course')
     def get(self, id, course_id):
         student = Student.query.get_or_404(id)
-        course = student.courses.filter_by(id=course_id).first()
+        course = Courses.filter_by(id=course_id).first()
         return course, HTTPStatus.OK
     
     @student_namespace.doc('delete_student_course')
