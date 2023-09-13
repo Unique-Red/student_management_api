@@ -1,4 +1,4 @@
-"""added courses
+"""added course
 
 Revision ID: 1303251bb8a7
 Revises: 38fd157869c9
@@ -28,7 +28,7 @@ def upgrade():
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    with op.batch_alter_table('courses', schema=None) as batch_op:
+    with op.batch_alter_table('course', schema=None) as batch_op:
         batch_op.add_column(sa.Column('course_code', sa.String(length=80), nullable=False))
         batch_op.add_column(sa.Column('course_title', sa.String(length=120), nullable=False))
         batch_op.add_column(sa.Column('course_unit', sa.Integer(), nullable=False))
@@ -61,7 +61,7 @@ def downgrade():
         batch_op.drop_column('last_name')
         batch_op.drop_column('first_name')
 
-    with op.batch_alter_table('courses', schema=None) as batch_op:
+    with op.batch_alter_table('course', schema=None) as batch_op:
         batch_op.add_column(sa.Column('description', sa.VARCHAR(length=120), nullable=False))
         batch_op.add_column(sa.Column('name', sa.VARCHAR(length=80), nullable=False))
         batch_op.drop_column('lecturer')

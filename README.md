@@ -1,12 +1,12 @@
 # Student Management API
 
-Student Management API as the name implies, it is used manage students data (their basic informations, courses and score)
+Student Management API as the name implies, it is used manage students data (their basic informations, course and score)
 
 ## Features
 - Endpoints for creating, reading, updating, and deleting students.
-- Registration of courses by students.
+- Registration of course by students.
 - View the number of students taking a course.
-- Retrieving all the students, courses and the ones that registered a particular course.
+- Retrieving all the students, course and the ones that registered a particular course.
 - GPA calculation.
 - JWT Authentication and authorization.
 

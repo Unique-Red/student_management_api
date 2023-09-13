@@ -7,7 +7,15 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from http import HTTPStatus
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
 
-auth_namespace = Namespace('Auth', description='Authentication related operations')
+authorizations = {
+    "jsonwebtoken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization"
+    }
+}
+
+auth_namespace = Namespace('Auth', authorizations=authorizations, description='Authentication related operations')
 
 admin_model = auth_namespace.model('Admin', {
     'email': fields.String(required=True, description='Email address of the admin'),
@@ -22,60 +30,27 @@ login_model = auth_namespace.model('Login', {
     'password': fields.String(required=True, description='Password of the user')
 })
 
-student_model = auth_namespace.model('Student', {
-    'email': fields.String(required=True, description='Email address of the student'),
-    'password': fields.String(required=True, description='Password of the student'),
-    'first_name': fields.String(required=True, description='First name of the student'),
-    'last_name': fields.String(required=True, description='Last name of the student'),
-    'matric_number': fields.String(required=True, description='Matric number of the student'),
-    'gpa': fields.Float(required=True, description='GPA of the student'),
-    'courses': fields.Integer(required=True, description='Courses of the student')
-})
 
+@auth_namespace.route('/register')
+class RegisterAPI(Resource):
+    @auth_namespace.expect(admin_model)
+    def post(self):
+        admin = Admin(email=auth_namespace.payload['email'], password=generate_password_hash(auth_namespace.payload['password'], method='sha256'), first_name=auth_namespace.payload['first_name'], last_name=auth_namespace.payload['last_name'], is_admin=auth_namespace.payload['is_admin'])
+        if Admin.query.filter_by(email=auth_namespace.payload['email']).first():
+            return {'message': 'Admin already exists'}, HTTPStatus.BAD_REQUEST
+        db.session.add(admin)
+        db.session.commit()
+        return {'message': 'Admin created successfully'}, HTTPStatus.CREATED
+    
 @auth_namespace.route('/login')
-class Login(Resource):
-    @auth_namespace.doc('login_user', description='Login a user')
+class LoginAPI(Resource):
     @auth_namespace.expect(login_model)
     def post(self):
-        email = request.json['email']
-        password = request.json['password']
-        admin = Admin.query.filter_by(email=email).first()
-        student = Student.query.filter_by(email=email).first()
-        if admin:
-            if check_password_hash(admin.password, password):
-                access_token = create_access_token(identity=admin.id)
-                refresh_token = create_refresh_token(identity=admin.id)
-                return {
-                    'message': 'Logged in as admin',
-                    'access_token': access_token,
-                    'refresh_token': refresh_token
-                }, HTTPStatus.OK
-            else:
-                return {'message': 'Invalid password'}, HTTPStatus.UNAUTHORIZED
-        elif student:
-            if check_password_hash(student.password, password):
-                access_token = create_access_token(identity=student.id)
-                refresh_token = create_refresh_token(identity=student.id)
-                return {
-                    'message': 'Logged in as student',
-                    'access_token': access_token,
-                    'refresh_token': refresh_token
-                }, HTTPStatus.OK
-            else:
-                return {'message': 'Invalid password'}, HTTPStatus.UNAUTHORIZED
-        else:
-            return {'message': 'Invalid email'}, HTTPStatus.UNAUTHORIZED
-        
-@auth_namespace.route("/refresh")
-class Refresh(Resource):
-    @jwt_required(refresh=True)
-    def post(self):
-        current_user = get_jwt_identity()
-        access_token = create_access_token(identity=current_user)
-        return {'access_token': access_token}, HTTPStatus.OK
-    
-@auth_namespace.route("/logout")
-class Logout(Resource):
-    @jwt_required()
-    def post(self):
-        return {'message': 'Successfully logged out'}, HTTPStatus.OK
+        admin = Admin.query.filter_by(email=auth_namespace.payload['email']).first()
+        if not admin:
+            return {'message': 'Admin does not exist'}, HTTPStatus.NOT_FOUND
+        if not check_password_hash(admin.password, auth_namespace.payload['password']):
+            return {'message': 'Incorrect password'}, HTTPStatus.UNAUTHORIZED
+        access_token = create_access_token(identity=admin.id, fresh=True)
+        refresh_token = create_refresh_token(identity=admin.id)
+        return {'access_token': access_token, 'refresh_token': refresh_token}, HTTPStatus.OK

@@ -1,5 +1,5 @@
 import unittest
-from ..models import Courses
+from ..models import Course
 from http import HTTPStatus
 from ..config.config import config_dict
 from .. import create_app
@@ -19,7 +19,7 @@ class CourseTestCase(unittest.TestCase):
         self.app_context.pop()
 
     def test_register_course(self):
-        response = self.client.post('/courses/register', json={
+        response = self.client.post('/course/register', json={
             'course name': 'python',
             'course code': 'pyt',
             'course description': 'python course',
@@ -32,8 +32,8 @@ class CourseTestCase(unittest.TestCase):
         self.assertEqual(response.json['course description'], 'python course')
         self.assertEqual(response.json['course instructor'], 'james')
 
-    def test_get_all_courses(self):
-        course = Courses(
+    def test_get_all_course(self):
+        course = Course(
             course_name='python',
             course_code='pyt',
             course_description='python course',
@@ -42,7 +42,7 @@ class CourseTestCase(unittest.TestCase):
         db.session.add(course)
         db.session.commit()
 
-        response = self.client.get('/courses')
+        response = self.client.get('/course')
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(len(response.json), 1)
         self.assertEqual(response.json[0]['course name'], 'python')
@@ -51,7 +51,7 @@ class CourseTestCase(unittest.TestCase):
         self.assertEqual(response.json[0]['course instructor'], 'james')
 
     def test_get_course_by_id(self):
-        course = Courses(
+        course = Course(
             course_name='python',
             course_code='pyt',
             course_description='python course',
@@ -60,7 +60,7 @@ class CourseTestCase(unittest.TestCase):
         db.session.add(course)
         db.session.commit()
 
-        response = self.client.get(f'/courses/{course.id}')
+        response = self.client.get(f'/course/{course.id}')
         self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertEqual(response.json['course name'], 'python')
         self.assertEqual(response.json['course code'], 'pyt')
@@ -68,7 +68,7 @@ class CourseTestCase(unittest.TestCase):
         self.assertEqual(response.json['course instructor'], 'james')
 
     def test_update_course(self):
-        course = Courses(
+        course = Course(
             course_name='python',
             course_code='pyt',
             course_description='python course',
