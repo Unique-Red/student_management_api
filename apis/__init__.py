@@ -4,7 +4,7 @@ from .auth.views import auth_namespace
 from .courses.views import course_namespace
 from .admin.views import admin_namespace
 from .models import Student, Course, CourseRegistered, Admin
-from extensions import db, jwt, migrate, api
+from extensions import db, jwt, migrate, api, swagger
 from .config.config import config_dict
 
 
@@ -18,20 +18,6 @@ def create_app(config=config_dict['dev']):
     jwt.init_app(app)
     migrate.init_app(app, db, render_as_batch=True)
     api.init_app(app)
-
-
-    # api = Api(app,
-    #     title='Student Management API',
-    #     version='1.0',
-    #     description='A simple student management API',
-    #     authorizations={
-    #         "apikey":{'type': 'apiKey',
-    #         'in': 'header',
-    #         'name': 'X-API-KEY',
-    #         'description': 'API Key'}
-    #     },
-    #     security='apikey'
-    # )
 
 
     api.add_namespace(student_namespace, path='/students')

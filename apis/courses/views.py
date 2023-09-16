@@ -4,7 +4,6 @@ from ..models import Student, Course, CourseRegistered
 from http import HTTPStatus
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask import request
-from flask_jwt_extended import jwt_required, get_jwt_identity
 
 authorizations = {
     "jsonwebtoken": {
