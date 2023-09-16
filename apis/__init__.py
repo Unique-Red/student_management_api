@@ -4,7 +4,7 @@ from .auth.views import auth_namespace
 from .courses.views import course_namespace
 from .admin.views import admin_namespace
 from .models import Student, Course, CourseRegistered, Admin
-from extensions import db, jwt, migrate, api, swagger
+from extensions import db, jwt, migrate, api
 from .config.config import config_dict
 
 
